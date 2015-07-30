@@ -30,14 +30,14 @@ class AutohubAPITests(unittest.TestCase):
                         "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
                     }
 
-        res = self.testapp.post_json('/api/add_car', input_car)
+        res = self.testapp.post_json('/api/cars', input_car)
 
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json, self.kermit_car)
 
     def test_add_car_non_json(self):
-        res = self.testapp.post('/api/add_car', {"some":"stuff"}, status=400)
+        res = self.testapp.post('/api/cars', {"some":"stuff"}, status=400)
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.json, {"error": "Body should be JSON"})
 

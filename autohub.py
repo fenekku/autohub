@@ -15,6 +15,8 @@ DELETE_CAR_ROUTE = 'delete_car'
 next_id = 0
 picture_path = "http://localhost:6547/cars/{id}/{filename}"
 
+CAR_ENDPOINT = '/api/cars'
+
 # Helper functions
 
 def set_autohub_metadata(request):
@@ -67,9 +69,9 @@ def add_car(request):
 
     return json_response
 
-# def list_car(request):
-#     set_autohub_metadata(request)
-#     return {'name': 'Hello View'}
+def list_car(request):
+    set_autohub_metadata(request)
+    return {'name': 'Hello View'}
 
 # def update_car(request):
 #     set_autohub_metadata(request)
@@ -85,15 +87,17 @@ def add_car(request):
 def main():
     config = Configurator()
 
-    config.add_route(ADD_CAR_ROUTE, '/api/add_car')
+    config.add_route(ADD_CAR_ROUTE, CAR_ENDPOINT)
     config.add_view(add_car,
                     route_name=ADD_CAR_ROUTE,
-                    renderer='json')
+                    renderer='json',
+                    request_method='POST')
 
-    # config.add_route(LIST_CAR_ROUTE, '/api/cars')
-    # config.add_view(list_car,
-    #                 route_name=LIST_CAR_ROUTE,
-    #                 renderer='json')
+    config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT)
+    config.add_view(list_car,
+                    route_name=LIST_CAR_ROUTE,
+                    renderer='json',
+                    request_method='GET')
 
     # config.add_route(UPDATE_CAR_ROUTE, '/api/update_car')
     # config.add_view(update_car,
