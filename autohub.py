@@ -21,6 +21,14 @@ picture_path = "http://localhost:6547/cars/{id}/{filename}"
 
 CAR_ENDPOINT = '/api/cars'
 
+# Helper exceptions
+
+class InvalidJSONError(Exception):
+    pass
+
+class InvalidFieldError(Exception):
+    pass
+
 # Database Models
 
 def create_db(name):
@@ -67,18 +75,29 @@ def delete_db(name):
 
 def add_car_to_db(car_json, db):
     # Add `car_json` json object to database `db`
-    # Eventually can be ORM
+    # Eventually use ORM with niceties
     # Return the id of the inserted car in the database
     cursor = db.cursor()
 
     car = [None for _ in xrange(7)]
     car[0] = car_json["owner"]
     car[1] = car_json["name"]
-    car[2] = car_json.get("brand", "")
+    car[2] = car_json.get("brand", u"")
+    if not isinstance(car[2], unicode):
+        raise InvalidFieldError("brand")
     car[3] = car_json.get("year", -1)
-    car[4] = car_json.get("engine", -1)
-    car[5] = car_json.get("description", "")
-    fn = basename(car_json.get("picture", ""))
+    if not isinstance(car[3], int):
+        raise InvalidFieldError("year")
+    car[4] = car_json.get("engine", -1.0)
+    if not isinstance(car[4], float):
+        raise InvalidFieldError("engine")
+    car[5] = car_json.get("description", u"")
+    if not isinstance(car[5], unicode):
+        raise InvalidFieldError("description")
+    fn = car_json.get("picture", u"")
+    if not isinstance(fn, unicode):
+        raise InvalidFieldError("picture")
+    fn = basename(fn)
     car[6] = fn
     cursor.execute("""INSERT INTO cars (name, owner, brand, year,
                                         engine, description, picture)
@@ -89,9 +108,6 @@ def add_car_to_db(car_json, db):
     return car_id
 
 # Helper functions and classes
-
-class InvalidJSONError(Exception):
-    pass
 
 def set_autohub_metadata(request):
     # Modify `request` to have the AutoHub-specific metadata
@@ -112,6 +128,9 @@ def valid_request(route_func):
         except KeyError as ke:
             request.response.status = '400 Bad Request'
             return {"error": "Missing field", "field": ke.message}
+        except InvalidFieldError as ife:
+            request.response.status = '400 Bad Request'
+            return {"error": "Invalid field format", "field": ife.message}
         except sqlite3.IntegrityError as ie:
             request.response.status = '400 Bad Request'
             return {"error": "Already existing car"}

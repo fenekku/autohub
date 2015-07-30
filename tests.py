@@ -110,22 +110,21 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.json, {"error": "Already existing car"})
 
-    # def test_add_car_invalid_fields(self):
-    #     input_car = {
-    #             "name": "Silver Spur",
-    #             "description": "This car can travel by map!",
-    #             "engine": 6.75,
-    #             "brand": "Rolls-Royce",
-    #             "year": 1980,
-    #             "owner": "Kermit the Frog",
-    #             "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
-    #                 }
+    def test_add_car_invalid_fields(self):
+        input_car = {
+            "name": "Silver Spur",
+            "owner": "Kermit the Frog",
+            "description": 1,
+            "engine": "6.75",
+            "brand": "Rolls-Royce",
+            "year": 1980,
+        }
 
-    #     res = self.testapp.post_json('/api/cars', input_car)
+        res = self.testapp.post_json('/api/cars', input_car, status=400)
 
-    #     self.assertEqual(res.content_type, 'application/json')
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(res.json, expected_json)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Invalid field format",
+                                    "field": "engine"})
 
 
     # def test_list_car(self):
