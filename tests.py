@@ -22,6 +22,17 @@ class AutohubAPITests(unittest.TestCase):
             "picture": "http://localhost:6547/cars/1/File:Kermit%27s_car_hood_ornament.jpg"
         }
 
+        self.count_car = {
+            "id": 2,
+            "owner": "Count von Count",
+            "name": "Steamer",
+            "brand": "Stanley Motor",
+            "year": -1,
+            "engine": -1.0,
+            "description": "Can hold up to 99 bats!",
+            "picture": ""
+        }
+
     def tearDown(self):
         delete_db("test.db")
 
@@ -127,11 +138,32 @@ class AutohubAPITests(unittest.TestCase):
                                     "field": "engine"})
 
 
-    # def test_list_car(self):
-        # res = self.testapp.get('/api/cars/1', status=200)
-        # self.assertEqual(res.content_type, 'application/json')
-        # res_car = json.loads(res.body)
-        # self.assertEqual(kermit_car, res_car)
+    def test_list_car_simple(self):
+        input_car1 = {
+            "name": "Silver Spur",
+            "description": "This car can travel by map!",
+            "engine": 6.75,
+            "brand": "Rolls-Royce",
+            "year": 1980,
+            "owner": "Kermit the Frog",
+            "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        }
+
+        input_car2 = {
+            "name": "Steamer",
+            "owner": "Count von Count",
+            "brand": "Stanley Motor",
+            "description": "Can hold up to 99 bats!",
+        }
+
+        res = self.testapp.post_json('/api/cars', input_car1)
+        res = self.testapp.post_json('/api/cars', input_car2)
+
+        res = self.testapp.get('/api/cars')
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(len(res.json), 2)
+        self.assertEqual(res.json[0], self.kermit_car)
+        self.assertEqual(res.json[1], self.count_car)
 
     # def test_list_cars(self):
     #     res = self.testapp.get('/api/list_car', status=200)

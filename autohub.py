@@ -1,4 +1,5 @@
 
+import collections
 import os
 from os.path import basename
 import sqlite3
@@ -13,6 +14,7 @@ DB_NAME = "autohub.db"
 __DB = None
 ADD_CAR_ROUTE = 'add_car'
 LIST_CAR_ROUTE = 'list_car'
+LIST_CARS_ROUTE = 'list_cars'
 UPDATE_CAR_ROUTE = 'update_car'
 DELETE_CAR_ROUTE = 'delete_car'
 
@@ -107,6 +109,14 @@ def add_car_to_db(car_json, db):
 
     return car_id
 
+def list_car_in_db(car_id, db):
+    # Return iterator of tuples representing cars
+    # Eventually return iterator of car objects
+    cursor = db.cursor()
+    if not car_id:
+        cursor.execute("SELECT * FROM cars ORDER BY id")
+        return cursor
+
 # Helper functions and classes
 
 def set_autohub_metadata(request):
@@ -142,6 +152,22 @@ def valid_request(route_func):
 
     return __validated
 
+def car_tuple_to_json(car_tuple):
+    # Return json object representing car from the `car_tuple` tuple
+    # ORM with more time and reality
+    json_car = {}
+    json_car["id"] = car_tuple[0]
+    json_car["owner"] = car_tuple[1]
+    json_car["name"] = car_tuple[2]
+    json_car["brand"] = car_tuple[3]
+    json_car["year"] = car_tuple[4]
+    json_car["engine"] = car_tuple[5]
+    json_car["description"] = car_tuple[6]
+    fn = car_tuple[7]
+    fn = picture_path.format(id=car_tuple[0], filename=fn) if fn else ""
+    json_car["picture"] = fn
+
+    return json_car
 
 # Main API Endpoints
 
@@ -173,9 +199,18 @@ def add_car(request):
 
     return json_response
 
-# def list_car(request):
-#     set_autohub_metadata(request)
-#     return {'name': 'Hello View'}
+def list_car(request):
+    # Process a request to list cars or a specific car.
+    # Eventually paginate in the API
+
+    set_autohub_metadata(request)
+
+    car_id = request.matchdict.get('id', "")
+    cars = list_car_in_db(car_id, get_db())
+    if isinstance(cars, collections.Iterable):
+        json_cars = [car_tuple_to_json(car) for car in cars]
+
+    return json_cars
 
 # def update_car(request):
 #     set_autohub_metadata(request)
@@ -195,18 +230,21 @@ def main(settings):
 
     DB_NAME = settings.get("DB_NAME", DB_NAME)
 
-    config.add_route(ADD_CAR_ROUTE, CAR_ENDPOINT)
+    config.add_route(ADD_CAR_ROUTE, CAR_ENDPOINT, request_method='POST')
     config.add_view(add_car,
                     route_name=ADD_CAR_ROUTE,
-                    renderer='json',
-                    request_method='POST')
+                    renderer='json')
 
-    # config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT)
+    config.add_route(LIST_CARS_ROUTE, CAR_ENDPOINT, request_method='GET')
+    config.add_view(list_car,
+                    route_name=LIST_CARS_ROUTE,
+                    renderer='json')
+
+    # config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT+"/{id}")
     # config.add_view(list_car,
     #                 route_name=LIST_CAR_ROUTE,
     #                 renderer='json',
     #                 request_method='GET')
-
     # config.add_route(UPDATE_CAR_ROUTE, '/api/update_car')
     # config.add_view(update_car,
     #                 route_name=UPDATE_CAR_ROUTE,
