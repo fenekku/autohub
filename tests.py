@@ -36,13 +36,10 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json, self.kermit_car)
 
-    # def test_add_car_non_json(self):
-    #     assert False
-        # res = self.testapp.post('/api/add_car', "stuff")
-
-        # self.assertEqual(res.content_type, 'application/json')
-        # self.assertEqual(res.status_code, 400)
-        # self.assertEqual(res.json, {"error": "Body should be JSON"})
+    def test_add_car_non_json(self):
+        res = self.testapp.post('/api/add_car', {"some":"stuff"}, status=400)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Body should be JSON"})
 
     # def test_add_car_missing_essential_fields(self):
     #     assert False
