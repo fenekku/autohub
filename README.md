@@ -37,21 +37,26 @@ Add a new car with description.
 
 | Parameter Name |  Type  |                 Description               |
 |----------------|:------:|:------------------------------------------|
-| description    | string |         *Required* The car's description  |
-| engine         | number |    The motor's engine in L. Default: -1.0 |
+| owner          | string |                *Required* The car's owner |
+| name           | string |                 *Required* The car's name |
 | brand          | string |              The car's brand. Default: "" |
 | year           | number | The car's year of production. Default: -1 |
-| owner          | string |                *Required* The car's owner |
+| engine         | number |    The motor's engine in L. Default: -1.0 |
+| description    | string |       The car's description. Default: ""  |
 | picture        | string |  URL to a picture of the car. Default: "" |
+
+Each `owner` and `name` pair must be unique.
 
 **Output**
 
 | Parameter Name |  Type  |                Description               |
-|----------------|:------:|:----------------------------------------:|
+|----------------|:------:|:-----------------------------------------|
 | id             | string |                                Unique id |
-| description    | string |                    The car's description |
-| engine         | number |                  The motor's engine in L |
+| owner          | string |                          The car's owner |
+| name           | string |                           The car's name |
 | brand          | string |                          The car's brand |
 | year           | number |             The car's year of production |
-| owner          | string |                          The car's owner |
+| engine         | number |                  The motor's engine in L |
+| description    | string |                    The car's description |
 | picture        | string |              URL to a picture of the car |
+

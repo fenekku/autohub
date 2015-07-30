@@ -1,5 +1,7 @@
 
+import os
 from os.path import basename
+import sqlite3
 
 from wsgiref.simple_server import make_server
 from pyramid.config import Configurator
@@ -7,6 +9,8 @@ from pyramid.view import view_config
 
 
 #Globals
+DB_NAME = "autohub.db"
+__DB = None
 ADD_CAR_ROUTE = 'add_car'
 LIST_CAR_ROUTE = 'list_car'
 UPDATE_CAR_ROUTE = 'update_car'
@@ -17,7 +21,76 @@ picture_path = "http://localhost:6547/cars/{id}/{filename}"
 
 CAR_ENDPOINT = '/api/cars'
 
-# Helper functions
+# Database Models
+
+def create_db(name):
+    # Create database - this is manual eventually we can use an ORM
+    create = not os.path.exists(name)
+    autohub_db = sqlite3.connect(name)
+
+    if create:
+        cursor = autohub_db.cursor()
+        # Create the necessary tables
+        cursor.execute('''CREATE TABLE cars
+                          (id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+                          name TEXT NOT NULL,
+                          owner TEXT NOT NULL,
+                          brand TEXT,
+                          year INTEGER,
+                          engine REAL,
+                          description TEXT,
+                          picture TEXT)''') #picture as URL for simplicity
+        #No users now so no real need for another table yet
+        autohub_db.commit()
+
+    return autohub_db
+
+def get_db():
+    # Singleton-ish pattern for access to database
+    global __DB
+
+    if not os.path.exists(DB_NAME):
+        __DB = create_db(DB_NAME)
+    elif not __DB:
+        __DB = sqlite3.connect(DB_NAME)
+    else:
+        pass
+    return __DB
+
+def delete_db(name):
+    if os.path.exists(name):
+        if DB_NAME == name:
+            db = get_db()
+            db.close()
+        os.remove(name)
+
+def add_car_to_db(car_json, db):
+    # Add `car_json` json object to database `db`
+    # Eventually can be ORM
+    # Return the id of the inserted car in the database
+    cursor = db.cursor()
+
+    car = [None for _ in xrange(7)]
+    car[0] = car_json["owner"]
+    car[1] = car_json["name"]
+    car[2] = car_json["brand"]
+    car[3] = car_json["year"]
+    car[4] = car_json["engine"]
+    car[5] = car_json["description"]
+    fn = basename(car_json["picture"])
+    car[6] = fn
+    cursor.execute("""INSERT INTO cars (name, owner, brand, year,
+                                        engine, description, picture)
+                      VALUES (?, ?, ?, ?, ?, ?, ?)""", car)
+    car_id = cursor.lastrowid
+    db.commit()
+
+    return car_id
+
+# Helper functions and classes
+
+class InvalidJSONError(Exception):
+    pass
 
 def set_autohub_metadata(request):
     # Modify `request` to have the AutoHub-specific metadata
@@ -32,15 +105,17 @@ def valid_request(route_func):
         except AssertionError as ae:
             request.response.status = '400 Bad Request'
             return {"error": "Body should be JSON"}
-        except ValueError as ve:
+        except InvalidJSONError as ije:
             request.response.status = '400 Bad Request'
             return {"error": "Problems parsing JSON"}
         except KeyError as ke:
             request.response.status = '400 Bad Request'
             return {"error": "Missing field", "field": ke.message}
         except Exception as e:
-            request.response.status = '400 Bad Request'
-            return {"error": e.message}
+            request.response.status_int = 500
+            import traceback
+            traceback.print_exc() #print to log - eventually real logger
+            return {"error": "Something potentially terrible happened!"}
 
     return __validated
 
@@ -50,28 +125,34 @@ def valid_request(route_func):
 @valid_request
 def add_car(request):
     # Process a request to add a car
-    global next_id
 
     set_autohub_metadata(request)
 
-    # No persistence for now
-    fn = basename(request.json["picture"])
+    # Invalid json is returned as a unicode string
+    # Valid json is returned as a dict
+    if isinstance(request.json, unicode):
+        raise InvalidJSONError()
+
+    # Simple persistence for now
+    car_id = add_car_to_db(request.json, get_db())
+
     json_response = {}
-    json_response["id"] = next_id
-    next_id += 1
-    json_response["description"] = request.json["description"]
-    json_response["engine"] = request.json["engine"]
-    json_response["brand"] = request.json["brand"]
-    json_response["year"] = request.json["year"]
+    json_response["id"] = car_id
     json_response["owner"] = request.json["owner"]
-    json_response["picture"] = picture_path.format(id=json_response["id"],
+    json_response["name"] = request.json["name"]
+    json_response["brand"] = request.json.get("brand", "")
+    json_response["year"] = request.json.get("year", -1)
+    json_response["engine"] = request.json.get("engine", -1.0)
+    json_response["description"] = request.json.get("description", "")
+    fn = basename(request.json.get("picture", ""))
+    json_response["picture"] = picture_path.format(id=car_id,
                                                    filename=fn)
 
     return json_response
 
-def list_car(request):
-    set_autohub_metadata(request)
-    return {'name': 'Hello View'}
+# def list_car(request):
+#     set_autohub_metadata(request)
+#     return {'name': 'Hello View'}
 
 # def update_car(request):
 #     set_autohub_metadata(request)
@@ -84,8 +165,12 @@ def list_car(request):
 
 # Running the server
 
-def main():
+def main(settings):
+    # Return the app object. `settings` is a dict of parameters
+    global DB_NAME
     config = Configurator()
+
+    DB_NAME = settings.get("DB_NAME", DB_NAME)
 
     config.add_route(ADD_CAR_ROUTE, CAR_ENDPOINT)
     config.add_view(add_car,
@@ -93,11 +178,11 @@ def main():
                     renderer='json',
                     request_method='POST')
 
-    config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT)
-    config.add_view(list_car,
-                    route_name=LIST_CAR_ROUTE,
-                    renderer='json',
-                    request_method='GET')
+    # config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT)
+    # config.add_view(list_car,
+    #                 route_name=LIST_CAR_ROUTE,
+    #                 renderer='json',
+    #                 request_method='GET')
 
     # config.add_route(UPDATE_CAR_ROUTE, '/api/update_car')
     # config.add_view(update_car,
@@ -114,7 +199,7 @@ def main():
     return app
 
 if __name__ == '__main__':
-    app = main()
+    app = main({})
     server = make_server('0.0.0.0', 6547, app) # real setup in reality
     print ('Starting up server on http://localhost:6547')
     server.serve_forever()

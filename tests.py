@@ -1,27 +1,34 @@
 import unittest
 
+from autohub import main, delete_db
 
 class AutohubAPITests(unittest.TestCase):
     def setUp(self):
-        from autohub import main
-        app = main()
+        app = main({"DB_NAME":"test.db"})
 
         from webtest import TestApp
         self.testapp = TestApp(app)
 
+        self.maxDiff = None
+
         self.kermit_car = {
-            "id": 0,
-            "description": "This car can travel by map!",
-            "engine": 6.75,
+            "id": 1,
+            "owner": "Kermit the Frog",
+            "name": "Silver Spur",
             "brand": "Rolls-Royce",
             "year": 1980,
-            "owner": "Kermit the Frog",
-            "picture": "http://localhost:6547/cars/0/File:Kermit%27s_car_hood_ornament.jpg"
+            "engine": 6.75,
+            "description": "This car can travel by map!",
+            "picture": "http://localhost:6547/cars/1/File:Kermit%27s_car_hood_ornament.jpg"
         }
+
+    def tearDown(self):
+        delete_db("test.db")
 
 
     def test_add_car_simple(self):
         input_car = {
+                        "name": "Silver Spur",
                         "description": "This car can travel by map!",
                         "engine": 6.75,
                         "brand": "Rolls-Royce",
@@ -41,20 +48,27 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.json, {"error": "Body should be JSON"})
 
+    def test_add_car_invalid_json(self):
+        res = self.testapp.post_json('/api/cars', '{"hello":"there"]',
+                                     status=400)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Problems parsing JSON"})
+
     # def test_add_car_missing_essential_fields(self):
-    #     assert False
-        # input_car = {
-        #                 "engine": 6.75,
-        #                 "brand": "Rolls-Royce",
-        #                 "year": 1980,
-        #                 "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
-        #             }
+    #     input_car = {
+    #                     "engine": 6.75,
+    #                     "brand": "Rolls-Royce",
+    #                     "year": 1980,
+    #                     "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+    #                 }
 
-        # res = self.testapp.post_json('/api/add_car', input_car)
+    #     res = self.testapp.post_json('/api/cars', input_car, status=400)
+    #     self.assertEqual(res.content_type, 'application/json')
+    #     self.assertEqual(res.json, {"error": "Missing field", "field": "description"})
 
-        # self.assertEqual(res.content_type, 'application/json')
-        # self.assertEqual(res.status_code, 200)
-        # self.assertEqual(res.json, self.kermit_car)
+    #     res = self.testapp.post_json('/api/cars', input_car, status=400)
+    #     self.assertEqual(res.content_type, 'application/json')
+    #     self.assertEqual(res.json, {"error": "Missing field", "field": "owner"})
 
     # def test_add_car_missing_nonessential_fields(self):
     #     assert False
