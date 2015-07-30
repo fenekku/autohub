@@ -39,7 +39,8 @@ def create_db(name):
                           year INTEGER,
                           engine REAL,
                           description TEXT,
-                          picture TEXT)''') #picture as URL for simplicity
+                          picture TEXT,
+                          UNIQUE(name, owner))''') #picture as URL for simplicity
         #No users now so no real need for another table yet
         autohub_db.commit()
 
