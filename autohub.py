@@ -116,6 +116,9 @@ def list_car_in_db(car_id, db):
     if not car_id:
         cursor.execute("SELECT * FROM cars ORDER BY id")
         return cursor
+    else:
+        cursor.execute("SELECT * FROM cars WHERE id=?", car_id)
+        return cursor.fetchone()
 
 # Helper functions and classes
 
@@ -207,10 +210,15 @@ def list_car(request):
 
     car_id = request.matchdict.get('id', "")
     cars = list_car_in_db(car_id, get_db())
-    if isinstance(cars, collections.Iterable):
-        json_cars = [car_tuple_to_json(car) for car in cars]
+    if isinstance(cars, tuple):
+        json_response = car_tuple_to_json(cars)
+    elif isinstance(cars, collections.Iterable):
+        json_response = [car_tuple_to_json(car) for car in cars]
+    else:
+        json_response = {'error': 'Car not found'}
+        request.response.status_int = 404
 
-    return json_cars
+    return json_response
 
 # def update_car(request):
 #     set_autohub_metadata(request)
@@ -240,11 +248,12 @@ def main(settings):
                     route_name=LIST_CARS_ROUTE,
                     renderer='json')
 
-    # config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT+"/{id}")
-    # config.add_view(list_car,
-    #                 route_name=LIST_CAR_ROUTE,
-    #                 renderer='json',
-    #                 request_method='GET')
+    config.add_route(LIST_CAR_ROUTE, CAR_ENDPOINT+"/{id}",
+                     request_method='GET')
+    config.add_view(list_car,
+                    route_name=LIST_CAR_ROUTE,
+                    renderer='json')
+
     # config.add_route(UPDATE_CAR_ROUTE, '/api/update_car')
     # config.add_view(update_car,
     #                 route_name=UPDATE_CAR_ROUTE,

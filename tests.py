@@ -138,7 +138,7 @@ class AutohubAPITests(unittest.TestCase):
                                     "field": "engine"})
 
 
-    def test_list_car_simple(self):
+    def test_list_cars_simple(self):
         input_car1 = {
             "name": "Silver Spur",
             "description": "This car can travel by map!",
@@ -165,13 +165,32 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.json[0], self.kermit_car)
         self.assertEqual(res.json[1], self.count_car)
 
-    # def test_list_cars(self):
-    #     res = self.testapp.get('/api/list_car', status=200)
-    #     self.assertEqual(res.content_type, 'application/json')
+    def test_list_car_empty(self):
+        res = self.testapp.get('/api/cars')
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(len(res.json), 0)
+        self.assertEqual(res.json, [])
 
-    #     self.assertEqual(json_car, res.body["response"])
-    #     #multiple json objects
+    def test_list_car_simple(self):
+        input_car1 = {
+            "name": "Silver Spur",
+            "description": "This car can travel by map!",
+            "engine": 6.75,
+            "brand": "Rolls-Royce",
+            "year": 1980,
+            "owner": "Kermit the Frog",
+            "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        }
 
+        res = self.testapp.post_json('/api/cars', input_car1)
+        res = self.testapp.get('/api/cars/1')
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, self.kermit_car)
+
+    def test_list_car_not_there(self):
+        res = self.testapp.get('/api/cars/1', status=404)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Car not found"})
 
     # def test_update_car(self):
     #     res = self.testapp.get('/api/add_car', status=200)
