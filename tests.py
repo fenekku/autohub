@@ -76,12 +76,12 @@ class AutohubAPITests(unittest.TestCase):
 
         res = self.testapp.post_json('/api/cars', input_car, status=400)
         self.assertEqual(res.content_type, 'application/json')
-        self.assertEqual(res.json, {"error": "Missing field", "field": "owner"})
+        self.assertEqual(res.json, {"error": "Missing field", "field": "name"})
 
-        input_car["owner"] = "Kermit the Frog"
+        input_car["name"] = "Silver Spur"
         res = self.testapp.post_json('/api/cars', input_car, status=400)
         self.assertEqual(res.content_type, 'application/json')
-        self.assertEqual(res.json, {"error": "Missing field", "field": "name"})
+        self.assertEqual(res.json, {"error": "Missing field", "field": "owner"})
 
     def test_add_car_missing_nonessential_fields(self):
         input_car = {
@@ -211,6 +211,48 @@ class AutohubAPITests(unittest.TestCase):
         self.count_car["id"] = 1
         self.assertEqual(res.json, self.count_car)
 
+    def test_update_car_not_there(self):
+
+        mod_car = {
+            "brand": "Stanley Motor",
+            "description": "Can hold up to 99 bats!",
+        }
+
+        res = self.testapp.put_json('/api/cars/{}'.format(1),
+                                    mod_car, status=404)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Car not found"})
+
+    def test_update_car_not_unique(self):
+
+        input_car1 = {
+            "name": "Silver Spur",
+            "description": "This car can travel by map!",
+            "engine": 6.75,
+            "brand": "Rolls-Royce",
+            "year": 1980,
+            "owner": "Kermit the Frog",
+            "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        }
+
+        input_car2 = {
+            "name": "Steamer",
+            "owner": "Count von Count",
+            "brand": "Stanley Motor",
+            "description": "Can hold up to 99 bats!",
+        }
+
+        mod_car = {
+            "name": "Steamer",
+            "owner": "Count von Count",
+        }
+
+        res = self.testapp.post_json('/api/cars', input_car1)
+        res = self.testapp.post_json('/api/cars', input_car2)
+
+        res = self.testapp.put_json('/api/cars/1', mod_car, status=400)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Already existing car"})
 
     def test_delete_car_simple(self):
         input_car = {

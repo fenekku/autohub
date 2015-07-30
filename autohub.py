@@ -63,8 +63,8 @@ def car_tuple_to_json(car_tuple):
     # ORM with more time and reality
     json_car = {}
     json_car["id"] = car_tuple[0]
-    json_car["owner"] = car_tuple[1]
-    json_car["name"] = car_tuple[2]
+    json_car["name"] = car_tuple[1]
+    json_car["owner"] = car_tuple[2]
     json_car["brand"] = car_tuple[3]
     json_car["year"] = car_tuple[4]
     json_car["engine"] = car_tuple[5]
@@ -78,8 +78,8 @@ def car_tuple_to_json(car_tuple):
 def car_json_to_tuple(car_json):
     # Return car tuple from car json
     car_tuple = [None for _ in xrange(7)]
-    car_tuple[0] = car_json["owner"]
-    car_tuple[1] = car_json["name"]
+    car_tuple[0] = car_json["name"]
+    car_tuple[1] = car_json["owner"]
     car_tuple[2] = car_json.get("brand", u"")
     if not isinstance(car_tuple[2], unicode):
         raise InvalidFieldError("brand")
@@ -172,10 +172,15 @@ def list_car_in_db(car_id, db):
     # Eventually return iterator of car objects
     cursor = db.cursor()
     if not car_id:
-        cursor.execute("SELECT * FROM cars ORDER BY id")
+        cursor.execute("""SELECT id, name, owner, brand, year, engine,
+                                 description, picture
+                          FROM cars ORDER BY id""")
         return cursor
     else:
-        cursor.execute("SELECT * FROM cars WHERE id=?", car_id)
+        cursor.execute("""SELECT id, name, owner, brand, year, engine,
+                                 description, picture
+                          FROM cars
+                          WHERE id=?""", car_id)
         return cursor.fetchone()
 
 def update_car_in_db(car_id, car_dict, db):
@@ -187,7 +192,9 @@ def update_car_in_db(car_id, car_dict, db):
     cursor.execute("UPDATE cars SET {} WHERE id = ?".format(set_str),
                    vals + [car_id])
     db.commit()
-    cursor.execute("SELECT * FROM cars WHERE id=?", car_id)
+    cursor.execute("""SELECT id, name, owner, brand, year, engine,
+                             description, picture
+                      FROM cars WHERE id=?""", car_id)
     return cursor.fetchone()
 
 def delete_car_in_db(car_id, db):
