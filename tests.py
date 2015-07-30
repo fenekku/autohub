@@ -227,4 +227,4 @@ class AutohubAPITests(unittest.TestCase):
     def test_delete_car_not_there(self):
         res = self.testapp.delete('/api/cars/1', status=404)
         self.assertEqual(res.content_type, 'application/json')
-        self.assertEqual(res.json, {"error": "Non-existing car"})
+        self.assertEqual(res.json, {"error": "Car not found"})

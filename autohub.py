@@ -300,10 +300,10 @@ def delete_car(request):
             json_response = {'Message': 'Deleted car {}'.format(car_id)}
         else:
             request.response.status_int = 404
-            json_response = {'error': 'Non-existing car'}
+            json_response = {'error': 'Car not found'}
     else:
         request.response.status_int = 404
-        json_response = {'error': 'Non-existing car'}
+        json_response = {'error': 'Car not found'}
     return json_response
 
 # Running the server
