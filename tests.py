@@ -20,7 +20,7 @@ class AutohubAPITests(unittest.TestCase):
         }
 
 
-    def test_add_car(self):
+    def test_add_car_simple(self):
         input_car = {
                         "description": "This car can travel by map!",
                         "engine": 6.75,
@@ -35,6 +35,62 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json, self.kermit_car)
+
+    # def test_add_car_non_json(self):
+    #     assert False
+        # res = self.testapp.post('/api/add_car', "stuff")
+
+        # self.assertEqual(res.content_type, 'application/json')
+        # self.assertEqual(res.status_code, 400)
+        # self.assertEqual(res.json, {"error": "Body should be JSON"})
+
+    # def test_add_car_missing_essential_fields(self):
+    #     assert False
+        # input_car = {
+        #                 "engine": 6.75,
+        #                 "brand": "Rolls-Royce",
+        #                 "year": 1980,
+        #                 "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        #             }
+
+        # res = self.testapp.post_json('/api/add_car', input_car)
+
+        # self.assertEqual(res.content_type, 'application/json')
+        # self.assertEqual(res.status_code, 200)
+        # self.assertEqual(res.json, self.kermit_car)
+
+    # def test_add_car_missing_nonessential_fields(self):
+    #     assert False
+        # input_car = {
+        #                 "description": "This car can travel by map!",
+        #                 "brand": "Rolls-Royce",
+        #                 "year": 1980,
+        #                 "owner": "Kermit the Frog",
+        #                 "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        #             }
+
+        # res = self.testapp.post_json('/api/add_car', input_car)
+
+        # self.assertEqual(res.content_type, 'application/json')
+        # self.assertEqual(res.status_code, 200)
+        # self.assertEqual(res.json, expected_json)
+
+    # def test_add_car_invalid_fields(self):
+    #     assert False
+        # input_car = {
+        #                 "description": "This car can travel by map!",
+        #                 "brand": "Rolls-Royce",
+        #                 "year": 1980,
+        #                 "owner": "Kermit the Frog",
+        #                 "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        #             }
+
+        # res = self.testapp.post_json('/api/add_car', input_car)
+
+        # self.assertEqual(res.content_type, 'application/json')
+        # self.assertEqual(res.status_code, 200)
+        # self.assertEqual(res.json, expected_json)
+
 
     # def test_list_car(self):
         # res = self.testapp.get('/api/cars/1', status=200)

@@ -21,9 +21,31 @@ def set_autohub_metadata(request):
     # Modify `request` to have the AutoHub-specific metadata
     request.response.headerlist.append(("X-AutoHub-Media-Type", "autohub.v1"))
 
+def valid_request(route_func):
+    # Decorator returning error response if invalid request
+    def __validated(request):
+        try:
+            assert request.content_type == 'application/json'
+            return route_func(request)
+        except AssertionError as ae:
+            request.response.status = '400 Bad Request'
+            return {"error": "Body should be JSON"}
+        except ValueError as ve:
+            request.response.status = '400 Bad Request'
+            return {"error": "Problems parsing JSON"}
+        except KeyError as ke:
+            request.response.status = '400 Bad Request'
+            return {"error": "Missing field", "field": ke.message}
+        except Exception as e:
+            request.response.status = '400 Bad Request'
+            return {"error": e.message}
+
+    return __validated
+
 
 # Main API Endpoints
 
+@valid_request
 def add_car(request):
     # Process a request to add a car
     global next_id
@@ -31,12 +53,17 @@ def add_car(request):
     set_autohub_metadata(request)
 
     # No persistence for now
-    json_response = request.json
-    fn = basename(json_response["picture"])
+    fn = basename(request.json["picture"])
+    json_response = {}
     json_response["id"] = next_id
+    next_id += 1
+    json_response["description"] = request.json["description"]
+    json_response["engine"] = request.json["engine"]
+    json_response["brand"] = request.json["brand"]
+    json_response["year"] = request.json["year"]
+    json_response["owner"] = request.json["owner"]
     json_response["picture"] = picture_path.format(id=json_response["id"],
                                                    filename=fn)
-    next_id += 1
 
     return json_response
 
