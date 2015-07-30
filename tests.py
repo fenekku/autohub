@@ -192,14 +192,39 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.content_type, 'application/json')
         self.assertEqual(res.json, {"error": "Car not found"})
 
-    # def test_update_car(self):
-    #     res = self.testapp.get('/api/add_car', status=200)
-    #     self.assertEqual(res.content_type, 'application/json')
-    #     self.assertEqual("{'version':1.0.0, 'response':true}", res.body)
+    def test_update_car(self):
+        input_car = {
+            "name": "Steamer",
+            "owner": "Count von Count",
+        }
+
+        mod_car = {
+            "brand": "Stanley Motor",
+            "description": "Can hold up to 99 bats!",
+        }
+
+        res = self.testapp.post_json('/api/cars', input_car)
+
+        res = self.testapp.put_json('/api/cars/{}'.format(res.json["id"]),
+                                    mod_car)
+        self.assertEqual(res.content_type, 'application/json')
+        self.count_car["id"] = 1
+        self.assertEqual(res.json, self.count_car)
 
 
-    # def test_delete_car(self):
-    #     res = self.testapp.get('/api/add_car', status=200)
-    #     self.assertEqual(res.content_type, 'application/json')
-    #     self.assertEqual("{'version':1.0.0, 'response':true}", res.body)
-    #     #list it
+    def test_delete_car_simple(self):
+        input_car = {
+            "name": "Steamer",
+            "owner": "Count von Count",
+        }
+        res = self.testapp.post_json('/api/cars', input_car)
+        res = self.testapp.delete('/api/cars/1', status=200)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"Message": "Deleted car 1"})
+        res = self.testapp.get('/api/cars/1', status=404)
+
+
+    def test_delete_car_not_there(self):
+        res = self.testapp.delete('/api/cars/1', status=404)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Non-existing car"})
