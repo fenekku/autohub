@@ -112,6 +112,9 @@ def valid_request(route_func):
         except KeyError as ke:
             request.response.status = '400 Bad Request'
             return {"error": "Missing field", "field": ke.message}
+        except sqlite3.IntegrityError as ie:
+            request.response.status = '400 Bad Request'
+            return {"error": "Already existing car"}
         except Exception as e:
             request.response.status_int = 500
             import traceback

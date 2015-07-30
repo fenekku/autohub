@@ -88,27 +88,27 @@ class AutohubAPITests(unittest.TestCase):
         self.assertEqual(res.json["engine"], -1)
         self.assertEqual(res.json["picture"], "")
 
-    # def test_add_car_non_unique_owner_name(self):
-    #     input_car1 = {
-    #         "name": "Silver Spur",
-    #         "description": "This car can travel by map!",
-    #         "engine": 6.75,
-    #         "brand": "Rolls-Royce",
-    #         "year": 1980,
-    #         "owner": "Kermit the Frog",
-    #         "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
-    #     }
+    def test_add_car_non_unique_owner_name(self):
+        input_car1 = {
+            "name": "Silver Spur",
+            "description": "This car can travel by map!",
+            "engine": 6.75,
+            "brand": "Rolls-Royce",
+            "year": 1980,
+            "owner": "Kermit the Frog",
+            "picture": "http://muppet.wikia.com/wiki/File:Kermit%27s_car_hood_ornament.jpg"
+        }
 
-    #     input_car2 = {
-    #         "name": "Silver Spur",
-    #         "owner": "Kermit the Frog",
-    #     }
+        input_car2 = {
+            "name": "Silver Spur",
+            "owner": "Kermit the Frog",
+        }
 
-    #     res = self.testapp.post_json('/api/cars', input_car1, status=200)
+        res = self.testapp.post_json('/api/cars', input_car1, status=200)
 
-    #     res = self.testapp.post_json('/api/cars', input_car2, 400)
-    #     self.assertEqual(res.content_type, 'application/json')
-    #     self.assertEqual(res.json, expected_json)
+        res = self.testapp.post_json('/api/cars', input_car2, status=400)
+        self.assertEqual(res.content_type, 'application/json')
+        self.assertEqual(res.json, {"error": "Already existing car"})
 
     # def test_add_car_invalid_fields(self):
     #     input_car = {
