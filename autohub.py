@@ -74,11 +74,11 @@ def add_car_to_db(car_json, db):
     car = [None for _ in xrange(7)]
     car[0] = car_json["owner"]
     car[1] = car_json["name"]
-    car[2] = car_json["brand"]
-    car[3] = car_json["year"]
-    car[4] = car_json["engine"]
-    car[5] = car_json["description"]
-    fn = basename(car_json["picture"])
+    car[2] = car_json.get("brand", "")
+    car[3] = car_json.get("year", -1)
+    car[4] = car_json.get("engine", -1)
+    car[5] = car_json.get("description", "")
+    fn = basename(car_json.get("picture", ""))
     car[6] = fn
     cursor.execute("""INSERT INTO cars (name, owner, brand, year,
                                         engine, description, picture)
@@ -143,11 +143,11 @@ def add_car(request):
     json_response["name"] = request.json["name"]
     json_response["brand"] = request.json.get("brand", "")
     json_response["year"] = request.json.get("year", -1)
-    json_response["engine"] = request.json.get("engine", -1.0)
+    json_response["engine"] = request.json.get("engine", -1)
     json_response["description"] = request.json.get("description", "")
     fn = basename(request.json.get("picture", ""))
-    json_response["picture"] = picture_path.format(id=car_id,
-                                                   filename=fn)
+    fn = picture_path.format(id=car_id, filename=fn) if fn else ""
+    json_response["picture"] = fn
 
     return json_response
 
